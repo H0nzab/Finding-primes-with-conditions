@@ -22,16 +22,19 @@ namespace find_primes
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-            this.DataContext = this;
-        }
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         private static CancellationTokenSource cts;
         private CancellationToken ct;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            this.DataContext = this;
+
+            cts = new CancellationTokenSource();
+            ct = cts.Token;
+        }       
 
         private long firstPrime;
 
@@ -102,8 +105,6 @@ namespace find_primes
         }
         private async void startFirst_Click(object sender, RoutedEventArgs e)
         {
-            cts = new CancellationTokenSource();
-            ct = cts.Token;
             string first = first_condition.Text;
             startFirst.BorderBrush = Brushes.Red;
             await Task.Run(async () =>
@@ -115,8 +116,6 @@ namespace find_primes
 
         private async void startSecond_Click(object sender, RoutedEventArgs e)
         {
-            cts = new CancellationTokenSource();
-            ct = cts.Token;
             string second = second_condition.Text;
             startSecond.BorderBrush = Brushes.Red;
             await Task.Run(async () =>
@@ -128,8 +127,6 @@ namespace find_primes
 
         private async void startThird_Click(object sender, RoutedEventArgs e)
         {
-            cts = new CancellationTokenSource();
-            ct = cts.Token;
             string third = third_condition.Text;
             startThird.BorderBrush = Brushes.Red;
             await Task.Run(async () =>

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,54 +14,70 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.ComponentModel;
+using System.DirectoryServices.ActiveDirectory;
+using System.Threading;
 
 namespace find_primes
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
         }
 
-        private async void start_Button_Click(object sender, RoutedEventArgs e)
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private static CancellationTokenSource cts;
+        private CancellationToken ct;
+
+        private long firstPrime;
+
+        public long FirstPrime 
+        { 
+            get => firstPrime; 
+            set {
+                firstPrime = value; 
+                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(FirstPrime)));
+            } 
+        }
+
+        private long secondPrime;
+
+        public long SecondPrime
         {
-            startButton.Content = "Processing...";
-            startButton.IsEnabled = false;
-            progressBar.Visibility = Visibility.Visible;
-
-            string first = first_condition.Text;
-            string second = second_condition.Text;
-            string third = third_condition.Text;
-
-            Task<long> f = Task.Run(() => FindPrime(first));
-            Task<long> s = Task.Run(() => FindPrime(second));
-            Task<long> t = Task.Run(() => FindPrime(third));
-
-            try
+            get => secondPrime;
+            set
             {
-                long[] results = await Task.WhenAll(f, s, t);
-                first_prime.Text = results[0].ToString();
-                second_prime.Text = results[1].ToString();
-                third_prime.Text = results[2].ToString();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred: {ex.Message}");
-            }
-            finally
-            {
-                startButton.Content = "Find Primes";
-                startButton.IsEnabled = true;
-                progressBar.Visibility = Visibility.Hidden;
+                secondPrime = value;
+                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(SecondPrime)));
             }
         }
-        private long FindPrime(string condition)
+
+        private long thirdPrime;
+
+        public long ThirdPrime
         {
-            long number = 2; // Starting search from the smallest prime number
+            get => thirdPrime;
+            set
+            {
+                thirdPrime = value;
+                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(ThirdPrime)));
+            }
+        }
+        public long FindPrime(string condition, CancellationToken ct)
+        {
+            long number = 2;
 
             while (true)
             {
+                if (ct.IsCancellationRequested)
+                {
+                    return -1;
+                }
+
                 if (IsPrime(number) && number.ToString().Contains(condition))
                 {
                     return number;
@@ -68,7 +86,7 @@ namespace find_primes
             }
         }
 
-        private bool IsPrime(long number)
+        public bool IsPrime(long number)
         {
             if (number <= 1) return false;
             if (number == 2) return true;
@@ -81,6 +99,49 @@ namespace find_primes
             }
 
             return true;
+        }
+        private async void startFirst_Click(object sender, RoutedEventArgs e)
+        {
+            cts = new CancellationTokenSource();
+            ct = cts.Token;
+            string first = first_condition.Text;
+            startFirst.BorderBrush = Brushes.Red;
+            await Task.Run(async () =>
+            {
+                FirstPrime = FindPrime(first, ct);
+            });
+            startFirst.BorderBrush = Brushes.Green;
+        }
+
+        private async void startSecond_Click(object sender, RoutedEventArgs e)
+        {
+            cts = new CancellationTokenSource();
+            ct = cts.Token;
+            string second = second_condition.Text;
+            startSecond.BorderBrush = Brushes.Red;
+            await Task.Run(async () =>
+            {
+                SecondPrime = FindPrime(second, ct);
+            });
+            startSecond.BorderBrush = Brushes.Green;
+        }
+
+        private async void startThird_Click(object sender, RoutedEventArgs e)
+        {
+            cts = new CancellationTokenSource();
+            ct = cts.Token;
+            string third = third_condition.Text;
+            startThird.BorderBrush = Brushes.Red;
+            await Task.Run(async () =>
+            {
+                ThirdPrime = FindPrime(third, ct);
+            });
+            startThird.BorderBrush = Brushes.Green;
+        }
+
+        private void cancelAll_Click(object sender, RoutedEventArgs e)
+        {
+            cts.Cancel();
         }
     }
 }

@@ -139,6 +139,8 @@ namespace find_primes
         private void cancelAll_Click(object sender, RoutedEventArgs e)
         {
             cts.Cancel();
+            cts = new CancellationTokenSource();
+            ct = cts.Token;
         }
     }
 }
